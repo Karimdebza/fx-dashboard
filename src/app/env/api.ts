@@ -1,4 +1,4 @@
 export const environment = {
-    production: false,
+    production: true,
     apiUrl: 'https://ai-predictor-sskw.onrender.com' 
   };

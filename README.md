@@ -13,7 +13,7 @@
 - 📊 **Graphe interactif** — historique 60 jours + prédiction avec intervalle de confiance
 - 🔄 **4 devises supportées** — MAD, USD, GBP, JPY
 - 🎚️ **Horizon configurable** — prédiction de 1 à 30 jours
-- 📉 **KPIs en temps réel** — taux actuel, tendance J+1, prédiction finale
+- 📉 **KPIs en temps réel** — taux actuel,🎯 Fiabilité : ██████████ 99.74%, prédiction finale
 - 📋 **Tableau de prédictions** — détail jour par jour avec min/max
 
 ---

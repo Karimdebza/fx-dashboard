@@ -1,6 +1,8 @@
 # 📈 FX Predictor
-
 > Prédiction du taux de change EUR → MAD, USD, GBP, JPY alimentée par un modèle de machine learning (Prophet).
+>
+><img width="667" height="834" alt="Capture d&#39;écran 2026-04-03 154002" src="https://github.com/user-attachments/assets/45c69ce7-f9e1-426c-948b-cea162b1e83e" />
+
 
 🔗 **[Live Demo](https://fx-dashboard-beta.vercel.app/)**
 
@@ -11,7 +13,7 @@
 - 📊 **Graphe interactif** — historique 60 jours + prédiction avec intervalle de confiance
 - 🔄 **4 devises supportées** — MAD, USD, GBP, JPY
 - 🎚️ **Horizon configurable** — prédiction de 1 à 30 jours
-- 📉 **KPIs en temps réel** — taux actuel, tendance J+1, prédiction finale
+- 📉 **KPIs en temps réel** — taux actuel,🎯 Fiabilité : ██████████ 99.74%, prédiction finale
 - 📋 **Tableau de prédictions** — détail jour par jour avec min/max
 
 ---

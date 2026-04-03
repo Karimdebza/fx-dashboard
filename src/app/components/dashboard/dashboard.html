@@ -58,6 +58,45 @@
   <canvas #chart [style.display]="loading || error ? 'none' : 'block'"></canvas>
 </div>
 
+@if (backtest) {
+  <div class="backtest-card">
+    <h2>🎯 Fiabilité du modèle — Backtesting 7 jours</h2>
+    <div class="backtest-scores">
+      <div class="score-card">
+        <span class="score-label">MAE</span>
+        <span class="score-value">{{ backtest.mae }}</span>
+        <span class="score-sub">erreur absolue moyenne</span>
+      </div>
+      <div class="score-card" [class.good]="backtest.mape < 1.5" [class.medium]="backtest.mape >= 1.5 && backtest.mape < 3" [class.bad]="backtest.mape >= 3">
+        <span class="score-label">MAPE</span>
+        <span class="score-value">{{ backtest.mape }}%</span>
+        <span class="score-sub">{{ backtest.mape < 1.5 ? '✅ Bon' : backtest.mape < 3 ? '⚠️ Moyen' : '❌ Faible' }}</span>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Réel</th>
+          <th>Prédit</th>
+          <th>Erreur</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (d of backtest.details; track d.date) {
+          <tr>
+            <td>{{ d.date }}</td>
+            <td>{{ d.actual }}</td>
+            <td class="pred">{{ d.predicted }}</td>
+            <td class="muted">{{ d.error }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
   <!-- Table -->
   @if (predictions.length) {
     <div class="table-card">

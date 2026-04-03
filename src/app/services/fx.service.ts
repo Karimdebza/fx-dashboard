@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { FxResponse } from '../interfaces/FxResponse';
 import { environment } from '../env/environment';
+import { BacktestResult } from '../interfaces/Backtest';
 @Injectable({
   providedIn: 'root',
 })
@@ -14,4 +15,12 @@ export class FxService {
   predict(devise:string,days:number): Observable<FxResponse> {
     return this.http.get<FxResponse>(`${this.apiUrl}/predict?devise=${devise}&days=${days}`);
   }
-  }
+
+  backtest(devise: string): Observable<BacktestResult> {
+  return this.http.get<BacktestResult>(
+    `${this.apiUrl}/backtest?devise=${devise}`
+  );
+}
+}
+
+  

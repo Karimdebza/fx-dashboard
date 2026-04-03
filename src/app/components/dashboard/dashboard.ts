@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { FxService } from '../../services/fx.service';
 import { FxResponse } from '../../interfaces/FxResponse';
 import { Chart, registerables } from 'chart.js';
+import { BacktestResult } from '../../interfaces/Backtest';
 
 Chart.register(...registerables);
 @Component({
@@ -21,7 +22,8 @@ export class Dashboard implements OnInit, OnDestroy {
   days = 5;
   loading = false;
   error :string | null = null;
-
+  backtest: BacktestResult | null = null;
+  backtestLoading = false;
   currentRate:number | null = null;
   trend:string | null = null;
   trendUp:boolean = false ;  
@@ -34,6 +36,7 @@ export class Dashboard implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadData();
+    this.loadBacktest();
   }
 
   ngOnDestroy(): void {
@@ -42,6 +45,7 @@ export class Dashboard implements OnInit, OnDestroy {
   selectDevise(devise: string) {
     this.selectedDevise = devise;
     this.loadData();
+    this.loadBacktest();
   }
 
   onDaysChange() {
@@ -91,7 +95,16 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
 
-
+  loadBacktest() {
+    this.backtestLoading = true;
+    this.fxService.backtest(this.selectedDevise).subscribe({
+      next: (data) => {
+        this.backtest = data;
+        this.backtestLoading = false;
+      },
+      error: () => this.backtestLoading = false
+    });
+  }
   
 
   buildChart(data: FxResponse) {

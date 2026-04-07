@@ -1,11 +1,21 @@
 <div class="dashboard">
 
-  <!-- Header -->
-  <div class="header">
+<div class="header">
+  <div class="header-left">
     <h1>📈 FX Predictor</h1>
-    <p>Prédiction du taux de change EUR →</p>
+    <p>Prédiction du taux de change EUR → {{ selectedDevise }}</p>
   </div>
-
+  <div class="live-badge">
+    <span class="dot"></span>
+    Live
+  </div>
+@if (alertMessage) {
+  <div class="alert-banner" [class.up]="alertUp" [class.down]="!alertUp">
+    <span class="alert-icon">{{ alertUp ? '🚀' : '⚠️' }}</span>
+    <span>{{ alertMessage }}</span>
+  </div>
+}
+</div>
   <!-- Controls -->
   <div class="controls">
     <div class="control-group">
@@ -49,6 +59,18 @@
   }
 
   <div class="chart-card">
+<div class="chart-header">
+  <h2>Historique + Prédiction</h2>
+  <div class="period-group">
+    @for (p of periods; track p.label) {
+      <button
+        [class.active]="selectedPeriod === p.value"
+        (click)="selectPeriod(p.value)">
+        {{ p.label }}
+      </button>
+    }
+  </div>
+</div>
   @if (loading) {
     <div class="state-msg">Chargement du modèle...</div>
   }
@@ -56,6 +78,25 @@
     <div class="state-msg error">{{ error }}</div>
   }
   <canvas #chart [style.display]="loading || error ? 'none' : 'block'"></canvas>
+</div>
+
+<div class="converter-card">
+  <h2>💱 Convertisseur rapide</h2>
+  <div class="converter-row">
+    <div class="converter-input">
+      <span class="currency-label">EUR</span>
+      <input
+        type="number"
+        [(ngModel)]="amount"
+        min="0"
+        placeholder="1000"/>
+    </div>
+    <span class="arrow">→</span>
+    <div class="converter-result">
+      <span class="currency-label">{{ selectedDevise }}</span>
+      <span class="result-value">{{ convert() }}</span>
+    </div>
+  </div>
 </div>
 
 @if (backtest) {

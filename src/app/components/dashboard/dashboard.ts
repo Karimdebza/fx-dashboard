@@ -17,6 +17,8 @@ export class Dashboard implements OnInit, OnDestroy {
 
 @ViewChild('chart') fxChartRef!: ElementRef;
 
+  selectedPeriod:number = 60;
+  periods = [{label:'1M', value:30},{label:'3M', value:90},{label:'6M', value:180},{label:'1AN', value:365}];  
   devises = ['MAD','USD', 'GBP', 'JPY']
   selectedDevise = 'MAD';
   days = 5;
@@ -29,9 +31,13 @@ export class Dashboard implements OnInit, OnDestroy {
   trendUp:boolean = false ;  
   lastPrediction:number | null = null;
   predictions:{date:string,prediction:number;lower:number;upper:number}[] = [];
+  alertMessage:string | null = null;
+  alertUp:boolean = true;
 
   private chart: Chart | null = null;
 
+  amount: number = 1000;
+  private lastData: FxResponse | null = null;
   constructor(private fxService: FxService) {}
 
   ngOnInit(): void {
@@ -48,6 +54,10 @@ export class Dashboard implements OnInit, OnDestroy {
     this.loadBacktest();
   }
 
+  selectPeriod(days: number) {
+    this.selectedPeriod = days;
+    if(this.lastData) this.buildChart(this.lastData);
+  }
   onDaysChange() {
     this.loadData();
   }
@@ -80,6 +90,7 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   processdata(data:FxResponse) {
+    this.lastData = data;
     this.currentRate = data.historic.at(-1) ?? null;
     this.lastPrediction = data.predictions.at(-1) ?? null;
     this.trendUp = (data.predictions[0] ?? 0) > (this.currentRate ?? 0);
@@ -90,8 +101,15 @@ export class Dashboard implements OnInit, OnDestroy {
       lower: parseFloat(data.lower[i].toFixed(4)),
       upper: parseFloat(data.upper[i].toFixed(4))
     }));
-  
-
+    if(this.lastPrediction && this.currentRate) {
+      const variation = ((this.lastPrediction - this.currentRate) / this.currentRate) * 100;
+      if(Math.abs(variation) >= 0.5) {
+          this.alertUp = variation > 0;
+          this.alertMessage = `Tendance forte détectée : ${variation > 0 ? '+' : ''}${variation.toFixed(2)}% sur ${this.days} jours`;
+      }else {
+        this.alertMessage = null;
+      }
+    }
   }
 
 
@@ -110,13 +128,13 @@ export class Dashboard implements OnInit, OnDestroy {
   buildChart(data: FxResponse) {
      this.fxChartRef.nativeElement.style.display = 'block';
       this.loading = false;
-    const last60dates = data.dates.slice(-60);
-    const last60values = data.historic.slice(-60);
-    const labels = [...last60dates, ...data.pred_dates];
-      const historicData = [
-      ...last60values.map(v => parseFloat(v.toFixed(4))),
-      ...new Array(data.pred_dates.length).fill(null)
-    ];
+      const last60dates = data.dates.slice(-this.selectedPeriod);
+      const last60values = data.historic.slice(-this.selectedPeriod);
+      const labels = [...last60dates, ...data.pred_dates];
+        const historicData = [
+        ...last60values.map(v => parseFloat(v.toFixed(4))),
+        ...new Array(data.pred_dates.length).fill(null)
+      ];
      const predData = [
       ...new Array(last60dates.length).fill(null),
       ...data.predictions.map(v => parseFloat(v.toFixed(4)))
@@ -184,4 +202,10 @@ export class Dashboard implements OnInit, OnDestroy {
       }
     });
   }
+
+  convert():string {
+    if(!this.currentRate || !this.amount) return '—';
+    return (this.amount * this.currentRate).toFixed(2);
+  }
+
 }

@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { FxResponse } from '../interfaces/FxResponse';
 import { environment } from '../env/environment';
 import { BacktestResult } from '../interfaces/Backtest';
+import { CompareResponse } from '../interfaces/CompareResponse';
 @Injectable({
   providedIn: 'root',
 })
@@ -21,6 +22,10 @@ export class FxService {
     `${this.apiUrl}/backtest?devise=${devise}`
   );
 }
+compare(days: number): Observable<CompareResponse> {
+  return this.http.get<CompareResponse>(`${this.apiUrl}/compare?days=${days}`);
+}
+
 }
 
   

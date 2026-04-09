@@ -4,6 +4,7 @@ export interface FxResponse {
     pred_dates: string[],
     predictions: number[],
     lower: number[],
-    upper: number[]
+    upper: number[],
+     error?: string;
 
 }

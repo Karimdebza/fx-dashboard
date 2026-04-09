@@ -5,7 +5,7 @@ import { FxService } from '../../services/fx.service';
 import { FxResponse } from '../../interfaces/FxResponse';
 import { Chart, registerables } from 'chart.js';
 import { BacktestResult } from '../../interfaces/Backtest';
-
+import { CompareResponse } from '../../interfaces/CompareResponse';
 Chart.register(...registerables);
 @Component({
   selector: 'app-dashboard',
@@ -33,9 +33,15 @@ export class Dashboard implements OnInit, OnDestroy {
   predictions:{date:string,prediction:number;lower:number;upper:number}[] = [];
   alertMessage:string | null = null;
   alertUp:boolean = true;
-
+  compareMode = false;
+  compareLoading = false;
   private chart: Chart | null = null;
-
+  private readonly DEVISE_COLORS: Record<string, string> = {
+    MAD: '#6366f1', // indigo
+    USD: '#f59e0b', // amber
+    GBP: '#10b981', // green
+    JPY: '#ef4444', // red
+  };
   amount: number = 1000;
   private lastData: FxResponse | null = null;
   constructor(private fxService: FxService) {}
@@ -48,6 +54,119 @@ export class Dashboard implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.chart?.destroy();
   }
+toggleCompareMode() {
+  this.compareMode = !this.compareMode;
+  if (this.compareMode) {
+    this.loadCompare();
+  } else {
+    setTimeout(() => {
+      if (this.lastData) this.buildChart(this.lastData);
+    }, 300); // ← 300ms au lieu de 100ms
+  }
+}
+loadCompare() {
+  this.compareLoading = true;
+  this.fxService.compare(this.days).subscribe({
+    next: (data) => {
+      this.compareLoading = false;
+      setTimeout(() => this.buildCompareChart(data), 200);
+    },
+    error: () => {
+      this.compareLoading = false;
+      this.error = 'Erreur de chargement de la comparaison.';
+    }
+  });
+}
+ 
+buildCompareChart(data: CompareResponse) {
+  if (!this.fxChartRef?.nativeElement) return;
+  this.chart?.destroy();
+
+  const devises = Object.keys(data).filter(d => !data[d].error);
+  if (!devises.length) return;
+
+  const ref = data[devises[0]];
+  const labels = [...ref.dates.slice(-this.selectedPeriod), ...ref.pred_dates];
+
+  const datasets: any[] = [];
+
+  devises.forEach(devise => {
+    const d = data[devise];
+    const color = this.DEVISE_COLORS[devise] ?? '#94a3b8';
+    const historicSlice = d.historic.slice(-this.selectedPeriod);
+
+    // Valeur de référence = premier point historique
+    const base = historicSlice[0];
+
+    // Normalisation en % : (valeur - base) / base * 100
+    const normalize = (v: number | null) =>
+      v === null ? null : parseFloat(((v - base) / base * 100).toFixed(3));
+
+    datasets.push({
+      label: `${devise}`,
+      data: [
+        ...historicSlice.map(normalize),
+        ...new Array(d.pred_dates.length).fill(null)
+      ],
+      borderColor: color,
+      borderWidth: 2,
+      pointRadius: 0,
+      tension: 0.3,
+    });
+
+    datasets.push({
+      label: `${devise} préd.`,
+      data: [
+        ...new Array(historicSlice.length).fill(null),
+        ...d.predictions.map(normalize)
+      ],
+      borderColor: color,
+      borderDash: [5, 5],
+      borderWidth: 2,
+      pointRadius: 0,
+      tension: 0.3,
+    });
+  });
+
+  this.chart = new Chart(this.fxChartRef.nativeElement, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          labels: {
+            color: '#94a3b8',
+            filter: (item) => !item.text.includes('préd.')
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              if (ctx.parsed.y === null) return '';
+              const sign = ctx.parsed.y >= 0 ? '+' : '';
+              return `${ctx.dataset.label}: ${sign}${ctx.parsed.y.toFixed(3)}%`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#94a3b8', maxTicksLimit: 8 },
+          grid: { color: '#1e293b' }
+        },
+        y: {
+          ticks: {
+            color: '#94a3b8',
+            callback: (v) => `${v}%`  // affiche % sur l'axe Y
+          },
+          grid: { color: '#334155' }
+        }
+      }
+    }
+  });
+}
   selectDevise(devise: string) {
     this.selectedDevise = devise;
     this.loadData();
@@ -126,6 +245,7 @@ export class Dashboard implements OnInit, OnDestroy {
   
 
   buildChart(data: FxResponse) {
+     if (!this.fxChartRef?.nativeElement) return;
      this.fxChartRef.nativeElement.style.display = 'block';
       this.loading = false;
       const last60dates = data.dates.slice(-this.selectedPeriod);
